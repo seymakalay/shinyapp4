@@ -1,0 +1,12 @@
+name: app4
+title: app4
+username:
+account: seymakalay87
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 444554
+bundleId: 1728591
+url: https://seymakalay87.shinyapps.io/app4/
+when: 1543493424.1986
+asMultiple: FALSE
+asStatic: FALSE
