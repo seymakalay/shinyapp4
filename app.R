@@ -2,17 +2,6 @@ library(shiny);library(ggplot2);library(readxl);
 library(dplyr);library(labeling)
 library(DT);library(rpivotTable);library(readr)
 library(stringr);library(tools)
-ClustereData <- read_excel("ClustereData.xlsx")
-#ClustedMean <- read_excel("ClustedMean.xlsx")
-clustedmean1row <-read_excel("df.xlsx")
-na.omit(ClustereData)
-attach(ClustereData)
-str(ClustereData)
-
-#ClustereData$c_I1I2Indice <- as.factor(c_I1I2Indice)
-dfpivot <- ClustereData[,c("DES_REGIONE_ABI_GEST","c_I1I2Indice","DES_PROVINCIA_ABI_GEST","REGIONE" )]
-
-
 
 
 
@@ -65,32 +54,7 @@ ui <- fluidPage(
                               min = 0, max = 1, 
                               value = 0.3),
                   
-                  
-                  # Select filetype
-                  radioButtons(inputId = "filetype",
-                               label = "Select filetype:",
-                               choices = c("csv", "tsv"),
-                               selected = "csv"),
-                  
-                  
-                  # Select variables to download
-                  checkboxGroupInput(inputId = "selected_var",
-                                     label = "Select variables:",
-                                     choices = names(ClustereData),
-                                     selected = c(2:6,18,43:46)),
-                  
-                  
-                  # Built with Shiny by RStudio
-                  br(), br(),
-                  tags$a("Contact with the App Builder", href="http://www00.unibg.it/struttura/strutturasmst.asp?id_notizia=81930"),
-                  h6("Built with ",
-                     img(src = "https://www.rstudio.com/wp-content/uploads/2014/04/shiny.png", height = "30px"),
-                     "by",
-                     img(src = "https://www.rstudio.com/wp-content/uploads/2014/07/RStudio-Logo-Blue-Gray.png", height = "30px"),
-                     ".")
-                  
-                  
-                  
+      
                   
                   
     ),
@@ -106,9 +70,8 @@ ui <- fluidPage(
                            tabPanel(title = "Plot", 
                                     
                                     br(),h4("Visualize Custom Plot"),br(), 
-                                    plotOutput(outputId = "scatterplot", brush = "plot_brush"), 
-                                    
-                                    textOutput(outputId = "correlation"),
+                                   
+                                
                                     br(),
                                     h4("Visualize the Selected Points "), br(),
                                     
@@ -159,7 +122,7 @@ ui <- fluidPage(
                                     h4("Interactive Table"), br(),
                                     h5("Recomendend: Table with Sub Total Col Heat map (or Bar Chart) and Count"),
                                     h5("Recomendend: Changing the Place of DES_Regione, DES_Proviancia, Regione and c_I1I2Indice"),
-                                    rpivotTableOutput("pivot")),
+                                   
                            
                            # Tab 3: Data
                            tabPanel(title = "Data", 
@@ -192,21 +155,7 @@ ui <- fluidPage(
 #) this is for shinytheme
 server <- 
   function(input, output, session) {
-    # Create scatterplot object the plotOutput function is expecting
-    
-    output$scatterplot <- renderPlot({
-      ggplot(data = ClustereData, aes_string(x = input$x, y = input$y,color=input$z,size=input$z)) +
-        geom_point(alpha = input$alpha)
-    })
-    
-    # Create densityplot
-    #  output$densityplot <- renderPlot({
-    #    ggplot(data = ClustereData, aes_string(x = input$xx)) +
-    #      geom_density()
-    #})
-    
-    
-    # fun_args.x <- list(mean = mean(ClustereData$x), sd = sd(ClustereData$x))
+
     
     output$histplot.x <- renderPlot({
       ggplot(data = ClustereData, aes_string(x = input$x)) +
@@ -218,7 +167,7 @@ server <-
       
     })
     
-    #  fun_args.y <- list(mean = mean(ClustereData$y), sd = sd(ClustereData$y))
+
     
     output$histplot.y <- renderPlot({
       ggplot(data = ClustereData, aes_string(x= input$y)) +
@@ -252,13 +201,6 @@ server <-
     
     
     
-    output$pivot <- renderRpivotTable({
-      rpivotTable(data =   dfpivot ,  
-                  rows = c("DES_REGIONE_ABI_GEST") , #,"DES_PROVINCIA_ABI_GEST" for this update dfpivot
-                  cols="c_I1I2Indice",vals = "Freq", aggregatorName = "Count", 
-                  rendererName = "Table", subtotals = TRUE)#width="200%", height="600px")
-      
-    })
     
     
     output$mytable = DT::renderDataTable({
@@ -274,55 +216,10 @@ server <-
                     rownames = FALSE)
     })
     
+
     
-    # Create text output stating the correlation between the two ploted 
-    output$correlation <- renderText({
-      r <- round(cor(ClustereData[, input$x], ClustereData[, input$y], use = "pairwise"), 3)
-      paste0("Correlation = ", r, ". Note: If the relationship between the two variables is not linear,
-             the correlation coefficient will not be meaningful.")
-    })
-    
-    
-    
-    # Print data table
-    output$moviestable <- DT::renderDataTable({
-      brushedPoints(ClustereData,input$plot_brush)%>%
-        # nearPoints(ClustereData, coordinfo = input$plot_hover) %>% 
-        select(COD_CAB_GEST, REGIONE ,DES_REGIONE_ABI_GEST,DES_PROVINCIA_ABI_GEST, c_I1I2Indice)
-    })
-    
-    # Download file
-    output$download_data <- downloadHandler(
-      filename = function() {
-        paste0("ClustereData.", input$filetype)
-      },
-      content = function(file) { 
-        if(input$filetype == "csv"){ 
-          write_csv(ClustereData %>% select(input$selected_var), path = file) 
-        }
-        if(input$filetype == "tsv"){ 
-          write_tsv(ClustereData %>% select(input$selected_var), path = file) 
-        }
-      }
-    )
-    
-    
-    # Download file Selected Graf
-    output$download_data1 <- downloadHandler(
-      filename = function() {
-        paste0("selecteddata.", input$filetype)
-      },
-      content = function(file) { 
-        if(input$filetype == "csv"){ 
-          write_csv(moviestable %>% select(input$plot_brush)  , path = file) 
-        }
-        if(input$filetype == "tsv"){ 
-          write_tsv(moviestable %>% select(input$plot_brush), path = file) 
-        }
-      }
-    )
-    
-    
+   
+  
     
     
     
